@@ -1,8 +1,8 @@
 from datetime import datetime, timedelta
 from unittest import TestCase
 
-import settings
-from database.database import Sighting
+from src import settings
+from src.database.database import Sighting
 
 
 class SightingTest(TestCase):

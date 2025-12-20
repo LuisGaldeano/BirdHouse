@@ -1,0 +1,20 @@
+services:
+  birdhouse:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    container_name: birdhouse
+    ports:
+      - "${BIRTHOUSE_EXTERNAL_PORT}:8000"
+    env_file:
+      - ./.env
+    volumes:
+      - vol_birdhouse_db:/src/database
+      - vol_birdhouse_logs:/src/logs
+    restart: always
+
+volumes:
+  vol_birdhouse_db:
+    driver: local
+  vol_birdhouse_logs:
+    driver: local

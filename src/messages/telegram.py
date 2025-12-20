@@ -1,6 +1,6 @@
 import logging
 from logging.config import fileConfig
-import settings
+from src import settings
 import telegram
 
 fileConfig('logs/logging_config.ini')

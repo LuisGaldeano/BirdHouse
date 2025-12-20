@@ -212,7 +212,9 @@ dmypy.json
 cython_debug/
 
 ### Project excludes
-logs/birdHouse.log
-database/birdHouse.db
-settings/testing.py
+src/logs/birdHouse.log
+src/database/birdHouse.db
+src/settings/testing.py
 last_sighting.jpg
+
+.idea

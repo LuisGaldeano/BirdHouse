@@ -1,8 +1,8 @@
 from unittest import TestCase, mock
 from telegram import Bot
 
-import settings
-from messages.telegram import send_message
+from src import settings
+from src.messages.telegram import send_message
 
 
 class SendMessageTest(TestCase):
