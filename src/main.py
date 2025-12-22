@@ -26,40 +26,42 @@ async def root():
     return 'Ok'
 
 
-@app.get('/sighting')
+@app.get("/sighting")
 async def sighting():
+    last_sighting: Sighting | None = (
+        db_session.query(Sighting)
+        .filter_by(message_send=True)
+        .order_by(Sighting.id.desc())
+        .first()
+    )
 
-    # Get the last sighting with message send = True and if is not a recently sighting or there wasn't previous
-    # sighting send a message
-    last_sighting: Sighting = db_session.query(
-        Sighting
-    ).filter_by(
-        message_send=True
-    ).order_by(
-        Sighting.id.desc()
-    ).first()
     message_send = False
     if not last_sighting or not last_sighting.recently_sighting:
         message_send = True
-        logger.info('Sending message with sighting')
-        send_message(settings.TELEGRAM_SIGHTING_MESSAGE)
+        logger.info("Sending message with sighting")
+        await send_message(settings.TELEGRAM_SIGHTING_MESSAGE)
 
-    # Save the sighting to the database
     db_session.add(Sighting(message_send=message_send))
     db_session.commit()
 
-    # Response the BirdHouse
     return {
-        'received': True,
-        'message_send': message_send
+        "received": True,
+        "message_send": message_send,
     }
 
 
-@app.get('/switch_light')
-async def switch_light():
-    settings.LIGHT_ACTIVE = not settings.LIGHT_ACTIVE
-    logger.info(f'New light value {settings.LIGHT_ACTIVE}')
-    return f'New light value {settings.LIGHT_ACTIVE}'
+@app.post("/light/on")
+async def light_on():
+    settings.LIGHT_ACTIVE = True
+    logger.info("Light set to True")
+    return {"light_active": settings.LIGHT_ACTIVE}
+
+
+@app.post("/light/off")
+async def light_off():
+    settings.LIGHT_ACTIVE = False
+    logger.info("Light set to False")
+    return {"light_active": settings.LIGHT_ACTIVE}
 
 
 @app.get('/light_value')

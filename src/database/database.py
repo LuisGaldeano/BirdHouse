@@ -39,7 +39,14 @@ class Sighting(Model):
         return f'{self.id} - {self.date} - {self.message_send}'
 
     @property
-    def recently_sighting(self):
-        if settings.RECENTLY_SIGHTING < (datetime.now(timezone.utc).replace(tzinfo=None) - self.date).total_seconds():
-            return False
-        return True
+    def recently_sighting(self) -> bool:
+        now = datetime.now(timezone.utc)
+        dt = self.date
+
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        else:
+            dt = dt.astimezone(timezone.utc)
+
+        elapsed = (now - dt).total_seconds()
+        return elapsed <= settings.RECENTLY_SIGHTING

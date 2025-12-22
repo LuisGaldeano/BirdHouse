@@ -9,6 +9,7 @@ services:
     env_file:
       - ./.env
     volumes:
+      - ./src:/src/
       - vol_birdhouse_db:/src/database
       - vol_birdhouse_logs:/src/logs
     restart: always
