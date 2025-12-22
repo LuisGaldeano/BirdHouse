@@ -1,13 +1,11 @@
-from datetime import datetime, timezone
+import settings
 import logging
+from datetime import datetime, timezone
 
-from sqlalchemy import (
-    create_engine, Column, Integer, DateTime, Boolean,
-)
+from sqlalchemy import create_engine, Column, Integer, DateTime, Boolean
 from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 
-from src import settings
 
 logger = logging.getLogger(__name__)
 

@@ -1,12 +1,11 @@
 import logging
-
-from fastapi.security import OAuth2PasswordBearer
 import uvicorn
+import settings
 
-from src.messages.telegram import send_message
-from src import settings
+from database.database import init_db, Sighting, db_session
 from fastapi import FastAPI
-from src.database import init_db, Sighting, db_session
+from fastapi.security import OAuth2PasswordBearer
+from messages.telegram import send_message
 
 logger = logging.getLogger(__name__)
 app = FastAPI()

@@ -3,7 +3,7 @@ from fastapi.security import APIKeyHeader
 from fastapi.security.utils import get_authorization_scheme_param
 from starlette import status
 
-from src.settings import API_KEY
+from settings import API_KEY
 
 AUTH_HEADER = APIKeyHeader(name='Authorization')
 

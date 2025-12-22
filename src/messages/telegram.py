@@ -1,7 +1,8 @@
 import logging
-from logging.config import fileConfig
-from src import settings
+import settings
 import telegram
+
+from logging.config import fileConfig
 
 fileConfig('logs/logging_config.ini')
 logger = logging.getLogger()
