@@ -3,19 +3,51 @@ services:
     build:
       context: .
       dockerfile: docker/Dockerfile
-    container_name: birdhouse
+    container_name: ${PROJECT_NAME}
+    hostname: birdhouse
+    image: ${PROJECT_NAME}_image
     ports:
-      - "${BIRDHOUSE_PORT}:8000"
+      - "${FASTAPI_PORT}:8000"
     env_file:
       - ./.env
     volumes:
       - ./src:/src/
-      - vol_birdhouse_db:/src/database
       - vol_birdhouse_logs:/src/logs
+      - vol_birdhouse_media:/src/media
     restart: always
+    networks:
+      - birdhouse_network
+
+  postgres:
+    image: postgres:17
+    container_name: ${PROJECT_NAME}_postgres
+    hostname: postgres
+    restart: always
+    env_file:
+      - .env
+    logging:
+      driver: "json-file"
+      options:
+        max-size: 50m
+        max-file: "2"
+    ports:
+      - "${POSTGRES_EXTERNAL_PORT}:5432"
+    volumes:
+      - vol_birdhouse_db:/var/lib/postgresql/data
+      - vol_birdhouse_logs:/src/logs
+      - vol_birdhouse_media:/src/media
+    networks:
+      - birdhouse_network
+
+
+networks:
+  birdhouse_network:
+    driver: bridge
 
 volumes:
   vol_birdhouse_db:
     driver: local
   vol_birdhouse_logs:
+    driver: local
+  vol_birdhouse_media:
     driver: local

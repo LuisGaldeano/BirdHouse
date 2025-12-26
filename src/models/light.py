@@ -2,27 +2,19 @@ import settings
 from datetime import datetime, timezone
 
 from database.database import Base
-from sqlalchemy import Column, Integer, DateTime, Boolean
+from sqlalchemy import Column, Integer, DateTime, Boolean, func
 
 
-class Sighting(Base):
-    __tablename__ = 'sighting'
-    id = Column(Integer(), primary_key=True)
-    date = Column(DateTime(timezone=True), default=datetime.now(timezone.utc))
-    light_status = Column(Boolean(), default=True)
+class Light(Base):
+    __tablename__ = "light"
+
+    id = Column(Integer, primary_key=True, index=True)
+    date = Column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        nullable=False,
+    )
+    light_status = Column(Boolean, nullable=False)
 
     def __str__(self):
         return f'{self.id} - {self.date} - {self.message_send}'
-
-    @property
-    def recently_light(self) -> bool:
-        now = datetime.now(timezone.utc)
-        dt = self.date
-
-        if dt.tzinfo is None:
-            dt = dt.replace(tzinfo=timezone.utc)
-        else:
-            dt = dt.astimezone(timezone.utc)
-
-        elapsed = (now - dt).total_seconds()
-        return elapsed <= settings.RECENTLY_SIGHTING

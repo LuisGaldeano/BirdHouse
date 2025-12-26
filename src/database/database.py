@@ -1,36 +1,25 @@
-import settings
-import logging
-from datetime import datetime, timezone
-from typing import Annotated
+from typing import Annotated, Generator
 
-from sqlalchemy import create_engine, Column, Integer, DateTime, Boolean
-from sqlalchemy.orm import sessionmaker, Session
 from fastapi import Depends
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy import create_engine
+from sqlalchemy.orm import Session, declarative_base, sessionmaker
 
+from settings.logging import logger
+from settings.connection import SQLALCHEMY_DATABASE_URL
 
-logger = logging.getLogger(__name__)
-
-
-DATABASE_URL = "sqlite:///./database/birdHouse.db"
-
-engine = create_engine(
-    DATABASE_URL,
-    connect_args={"check_same_thread": False},  # importante para SQLite en FastAPI
-)
-
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
+engine = create_engine(SQLALCHEMY_DATABASE_URL, pool_pre_ping=True, pool_size=5, max_overflow=10)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
 def init_db() -> None:
-    logger.info("Initializing database")
+    logger.info("Initializing database (create_all)")
     Base.metadata.create_all(bind=engine)
     logger.info("Database initialized")
 
 
-def get_db():
-    db: Session = SessionLocal()
+def get_db() -> Generator[Session, None, None]:
+    db = SessionLocal()
     try:
         yield db
     finally:
@@ -38,6 +27,3 @@ def get_db():
 
 
 db_dependency = Annotated[Session, Depends(get_db)]
-
-
-

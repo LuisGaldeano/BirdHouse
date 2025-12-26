@@ -1,46 +1,57 @@
-import os
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
+from database.database import get_db
 
-from fastapi import APIRouter
-from crud.cat_scope_workplace_rel import CatScopeWorkplaceRelRepository
-from models.schema.cat_scope_workplace_rel import NewCatScopeWorkplaceRel
-from database.database import db_dependency
-from resources import responses
-from settings.logging import logger
-from database.database import db_session
+from models.light import Light
 
 router = APIRouter()
 
-@router.get("/cat_scope_workplace_rel/{workplace_id}")
-async def cat_scope_workplace_rel_by_workplace_id(db: db_dependency, workplace_id: int):
-    data = CatScopeWorkplaceRelRepository(db=db).get_by_int_field(field_id=workplace_id)
-    return responses.ApiResponse(data=data).generate_response()
-
 
 @router.post("/light/on")
-async def light_on():
+def light_on(db: Session = Depends(get_db)):
+    last = db.query(Light).order_by(Light.id.desc()).first()
 
-    light = db_session.query(Sighting)
-        .filter_by(message_send=True)
-        .order_by(Sighting.id.desc())
-        .first()
-    )
-    if light:
-        return {"light_active": light}
+    if last and last.light_status is True:
+        return {"light_status": True, "created": False, "last_id": last.id}
 
+    new_event = Light(light_status=True)
+    db.add(new_event)
+    db.commit()
+    db.refresh(new_event)
 
-
-
-    logger.info("Light set to True")
-
-
-
-@app.post("/light/off")
-async def light_off():
-    settings.LIGHT_ACTIVE = False
-    logger.info("Light set to False")
-    return {"light_active": settings.LIGHT_ACTIVE}
+    return {
+        "light_status": new_event.light_status,
+        "created": True,
+        "id": new_event.id,
+        "created_at": new_event.date,
+    }
 
 
-@app.get('/light_value')
-async def light_value():
-    return settings.LIGHT_ACTIVE
+@router.post("/light/off")
+def light_off(db: Session = Depends(get_db)):
+    last = db.query(Light).order_by(Light.id.desc()).first()
+
+    if last and last.light_status is False:
+        return {"light_status": False, "created": False, "last_id": last.id}
+
+    new_event = Light(light_status=False)
+    db.add(new_event)
+    db.commit()
+    db.refresh(new_event)
+
+    return {
+        "light_status": new_event.light_status,
+        "created": True,
+        "id": new_event.id,
+        "created_at": new_event.date,
+    }
+
+
+@router.get('/light_status')
+async def light_status(db: Session = Depends(get_db)):
+    sighting = db.query(Light).order_by(Light.id.desc()).first()
+
+    if sighting is None:
+        return {"error": "There are no records"}
+
+    return {"light_status": sighting.light_status}
