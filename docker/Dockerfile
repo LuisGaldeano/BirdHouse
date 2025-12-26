@@ -18,12 +18,13 @@ RUN poetry config virtualenvs.create false && poetry install
 
 RUN mkdir -p /src/database /src/logs
 
+# Prepare the CMD command with the script to be run at the begining of the deploy
+RUN mkdir -p /scripts
+COPY docker/post_deploy.sh /scripts/post_deploy.sh
+
 RUN useradd -m appuser && chown -R appuser:appuser /src
 USER appuser
 
 EXPOSE 8000
 
-RUN mkdir -p /scripts
-COPY docker/post_deploy.sh /scripts/post_deploy.sh
-
-CMD /scripts/post_deploy.sh
+CMD ["sh", "/scripts/post_deploy.sh"]
