@@ -1,52 +1,43 @@
 import settings
 import logging
 from datetime import datetime, timezone
+from typing import Annotated
 
 from sqlalchemy import create_engine, Column, Integer, DateTime, Boolean
-from sqlalchemy.orm import scoped_session, sessionmaker
+from sqlalchemy.orm import sessionmaker, Session
+from fastapi import Depends
 from sqlalchemy.ext.declarative import declarative_base
 
 
 logger = logging.getLogger(__name__)
 
-engine = create_engine('sqlite:///database/birdHouse.db')
-db_session = scoped_session(
-    sessionmaker(
-        autocommit=False,
-        autoflush=False,
-        bind=engine
-    )
+
+DATABASE_URL = "sqlite:///./database/birdHouse.db"
+
+engine = create_engine(
+    DATABASE_URL,
+    connect_args={"check_same_thread": False},  # importante para SQLite en FastAPI
 )
 
-
-def init_db():
-    logger.info('Initializing database')
-    Model.metadata.create_all(bind=engine)
-    logger.info('Database initialized')
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+Base = declarative_base()
 
 
-Model = declarative_base(name='Model')
-Model.query = db_session.query_property()
+def init_db() -> None:
+    logger.info("Initializing database")
+    Base.metadata.create_all(bind=engine)
+    logger.info("Database initialized")
 
 
-class Sighting(Model):
-    __tablename__ = 'sighting'
-    id = Column(Integer(), primary_key=True)
-    date = Column(DateTime(timezone=True), default=datetime.now(timezone.utc))
-    message_send = Column(Boolean(), default=True)
+def get_db():
+    db: Session = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
 
-    def __str__(self):
-        return f'{self.id} - {self.date} - {self.message_send}'
 
-    @property
-    def recently_sighting(self) -> bool:
-        now = datetime.now(timezone.utc)
-        dt = self.date
+db_dependency = Annotated[Session, Depends(get_db)]
 
-        if dt.tzinfo is None:
-            dt = dt.replace(tzinfo=timezone.utc)
-        else:
-            dt = dt.astimezone(timezone.utc)
 
-        elapsed = (now - dt).total_seconds()
-        return elapsed <= settings.RECENTLY_SIGHTING
+

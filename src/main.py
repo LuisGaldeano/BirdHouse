@@ -9,8 +9,6 @@ from messages.telegram import send_message
 
 logger = logging.getLogger(__name__)
 app = FastAPI()
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl=settings.API_KEY)
-
 
 @app.on_event("startup")
 async def startup_event():
