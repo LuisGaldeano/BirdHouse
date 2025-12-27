@@ -39,7 +39,8 @@ async def sighting(db: Session = Depends(get_db)):
 
     if message_send:
         logger.info("Sending message with sighting")
-        await send_message(os.getenv("TELEGRAM_SIGHTING_MESSAGE"))
+        message = f"{os.getenv('TELEGRAM_SIGHTING_MESSAGE')} - URL: {os.getenv('CAMERA_URL')}"
+        await send_message(message)
 
     message = Sighting(message_send=message_send, date=now)
     db.add(message)
