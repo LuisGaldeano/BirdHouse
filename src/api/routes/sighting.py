@@ -1,30 +1,52 @@
+import os
+from datetime import datetime, timezone, timedelta
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from database.database import get_db
-
+from models.alert import AlertSwitch
+from settings.logging import get_logger
+from messages.telegram import send_message
 from models.sighting import Sighting
+
+logger = get_logger(__name__)
 
 router = APIRouter()
 
-# @app.get("/sighting")
-# async def sighting():
-#     last_sighting: Sighting | None = (
-#         db_session.query(Sighting)
-#         .filter_by(message_send=True)
-#         .order_by(Sighting.id.desc())
-#         .first()
-#     )
-#
-#     message_send = False
-#     if not last_sighting or not last_sighting.recently_sighting:
-#         message_send = True
-#         logger.info("Sending message with sighting")
-#         await send_message(settings.TELEGRAM_SIGHTING_MESSAGE)
-#
-#     db_session.add(Sighting(message_send=message_send))
-#     db_session.commit()
-#
-#     return {
-#         "received": True,
-#         "message_send": message_send,
-#     }
+@router.get("/sighting")
+async def sighting(db: Session = Depends(get_db)):
+    waiting_time = float(os.getenv("RECENTLY_SIGHTING", "300"))
+    now = datetime.now(timezone.utc)
+
+    alert = db.query(AlertSwitch).order_by(AlertSwitch.id.desc()).first()
+
+    if not alert.enabled:
+        return {"Alerts are not enabled"}
+
+    last_sighting = db.query(Sighting).filter_by(message_send=True).order_by(Sighting.id.desc()).first()
+
+    message_send = False
+
+    if last_sighting is None:
+        message_send = True
+    else:
+        dt = last_sighting.date
+
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+
+        if dt <= now - timedelta(seconds=waiting_time):
+            message_send = True
+
+    if message_send:
+        logger.info("Sending message with sighting")
+        await send_message(os.getenv("TELEGRAM_SIGHTING_MESSAGE"))
+
+    message = Sighting(message_send=message_send, date=now)
+    db.add(message)
+    db.commit()
+    db.refresh(message)
+
+    return {
+        "received": True,
+        "message_send": message_send,
+    }

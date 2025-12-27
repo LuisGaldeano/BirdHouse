@@ -1,12 +1,16 @@
 import logging
+from logging.config import fileConfig
+from pathlib import Path
 
+LOG_CONFIG_PATH = Path("/src/logs/logging_config.ini")
 
-def logger():
+if LOG_CONFIG_PATH.exists():
+    fileConfig(LOG_CONFIG_PATH, disable_existing_loggers=False)
+else:
     logging.basicConfig(
-        level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+        level=logging.INFO,
+        format="%(asctime)s %(name)-12s %(levelname)-8s %(message)s",
     )
-    start_logger = logging.getLogger(__name__)
-    return start_logger
 
-
-logger = logger()
+def get_logger(name: str):
+    return logging.getLogger(name)

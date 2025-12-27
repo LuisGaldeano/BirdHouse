@@ -7,7 +7,7 @@ from models.light import Light
 router = APIRouter()
 
 
-@router.post("/light/on")
+@router.post("/on")
 def light_on(db: Session = Depends(get_db)):
     last = db.query(Light).order_by(Light.id.desc()).first()
 
@@ -27,7 +27,7 @@ def light_on(db: Session = Depends(get_db)):
     }
 
 
-@router.post("/light/off")
+@router.post("/off")
 def light_off(db: Session = Depends(get_db)):
     last = db.query(Light).order_by(Light.id.desc()).first()
 

@@ -1,6 +1,3 @@
-import settings
-from datetime import datetime, timezone
-
 from database.database import Base
 from sqlalchemy import Column, Integer, DateTime, Boolean, func
 
