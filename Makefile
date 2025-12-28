@@ -26,14 +26,10 @@ build: prepare-env
 
 complete-build: build down-up
 logs:
-	$s cd ./docker && docker logs --tail ${TAIL_LOGS} -f ${PROJECT_NAME}_backend
+	$s cd ./docker && docker logs --tail ${TAIL_LOGS} -f ${PROJECT_NAME}
 
 bash:
-	$s cd ./docker && docker exec -it ${PROJECT_NAME}_backend bash
+	$s cd ./docker && docker exec -it ${PROJECT_NAME} bash
 
-sh:
-	$s cd ./docker && docker exec -it ${PROJECT_NAME}_backend bash
-
-shell:
-	$s cd ./docker && docker exec -it ${PROJECT_NAME}_backend python manage.py shell_plus
-
+test:
+	$s docker exec ${PROJECT_NAME} python -m pytest --log-cli-level=ERROR --disable-pytest-warnings
