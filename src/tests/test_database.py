@@ -1,21 +1,42 @@
-import settings
+from fastapi import FastAPI
+from fastapi.testclient import TestClient
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import StaticPool
 
-from datetime import datetime, timedelta
-from unittest import TestCase
-from database.database import Sighting
+from database.database import Base, get_db
 
 
-class SightingTest(TestCase):
-    def test_recently_sighting(self):
-        sighting = Sighting(date=datetime.now())
-        self.assertTrue(sighting.recently_sighting)
-        sighting = Sighting(date=datetime.now() - timedelta(seconds=2 * settings.RECENTLY_SIGHTING))
-        self.assertFalse(sighting.recently_sighting)
+class BaseDBTest:
+    engine = create_engine(
+        "sqlite://",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+    SessionLocal = sessionmaker(
+        autocommit=False,
+        autoflush=False,
+        bind=engine,
+    )
 
-    def test_str(self):
-        sighting = Sighting(
-            id=0,
-            date=datetime.now(),
-            message_send=True
-        )
-        self.assertEqual(str(sighting), f'{sighting.id} - {sighting.date} - {sighting.message_send}')
+    @classmethod
+    def create_test_app(cls, router):
+        app = FastAPI()
+        app.include_router(router)
+
+        def override_get_db():
+            db = cls.SessionLocal()
+            try:
+                yield db
+            finally:
+                db.close()
+
+        app.dependency_overrides[get_db] = override_get_db
+        return TestClient(app)
+
+    def reset_db(self):
+        Base.metadata.drop_all(bind=self.engine)
+        Base.metadata.create_all(bind=self.engine)
+
+    def _db(self):
+        return self.SessionLocal()

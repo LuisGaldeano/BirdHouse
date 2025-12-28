@@ -11,6 +11,7 @@ class Sighting(Base):
     id = Column(Integer(), primary_key=True)
     date = Column(DateTime(timezone=True), default=datetime.now(timezone.utc))
     message_send = Column(Boolean(), default=True)
+    photo = Column(Boolean(), default=False)
 
     def __str__(self):
         return f'{self.id} - {self.date} - {self.message_send}'
