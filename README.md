@@ -72,10 +72,10 @@ cp .env-dist .env
 
 The most important variables to configure are:
 
-- Database 
-  - POSTGRES_HOST 
-  - POSTGRES_USER 
-  - POSTGRES_PASSWORD 
+- Database
+  - POSTGRES_HOST
+  - POSTGRES_USER
+  - POSTGRES_PASSWORD
   - POSTGRES_DB
 
 - Telegram
@@ -90,8 +90,8 @@ The backend exposes a REST API under the /api prefix.
 
 Main features:
 
-- Store light on/off events 
-- Enable or disable alert notifications 
+- Store light on/off events
+- Enable or disable alert notifications
 - Send Telegram messages or photos when a sighting occurs (if alerts are enabled)
 
 You can interact with the API either via HTTP requests or directly from the Swagger UI.

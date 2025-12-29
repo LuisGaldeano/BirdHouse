@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
@@ -9,8 +10,8 @@ from database.database import Base, get_db
 
 class BaseDBTest:
     engine = create_engine(
-        "sqlite://",
-        connect_args={"check_same_thread": False},
+        'sqlite://',
+        connect_args={'check_same_thread': False},
         poolclass=StaticPool,
     )
     SessionLocal = sessionmaker(

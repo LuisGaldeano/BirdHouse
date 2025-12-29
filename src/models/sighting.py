@@ -1,8 +1,7 @@
-import os
+# -*- coding: utf-8 -*-
 from datetime import datetime, timezone
-
-from database.database import Base
 from sqlalchemy import Column, Integer, DateTime, Boolean
+from database.database import Base
 
 
 class Sighting(Base):

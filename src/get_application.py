@@ -1,5 +1,5 @@
+# -*- coding: utf-8 -*-
 from fastapi import FastAPI
-from starlette.middleware.cors import CORSMiddleware
 
 from database.database import init_db
 from api.routes.api import router as api_router

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from typing import Annotated, Generator
 
 from fastapi import Depends
@@ -15,9 +16,9 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
 def init_db() -> None:
-    logger.info("Initializing database (create_all)")
+    logger.info('Initializing database (create_all)')
     Base.metadata.create_all(bind=engine)
-    logger.info("Database initialized")
+    logger.info('Database initialized')
 
 
 def get_db() -> Generator[Session, None, None]:

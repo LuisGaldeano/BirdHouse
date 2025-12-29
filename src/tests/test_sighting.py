@@ -1,4 +1,6 @@
+# -*- coding: utf-8 -*-
 import os
+from datetime import datetime, timezone, timedelta
 from unittest import TestCase
 from unittest.mock import AsyncMock, patch
 
@@ -6,6 +8,7 @@ from api.routes.sighting import router
 from models.alert import AlertSwitch
 from models.sighting import Sighting
 from tests.test_database import BaseDBTest
+
 
 
 class TestSightingEndpoint(TestCase, BaseDBTest):
@@ -16,9 +19,9 @@ class TestSightingEndpoint(TestCase, BaseDBTest):
     def setUp(self):
         self.reset_db()
 
-        os.environ["RECENTLY_SIGHTING"] = "300"
-        os.environ["TELEGRAM_SIGHTING_MESSAGE"] = "Sighting detected"
-        os.environ["CAMERA_URL"] = "http://camera.local/stream"
+        os.environ['RECENTLY_SIGHTING'] = '300'
+        os.environ['TELEGRAM_SIGHTING_MESSAGE'] = 'Sighting detected'
+        os.environ['CAMERA_URL'] = 'http://camera.local/stream'
 
     def _insert_alert(self, enabled: bool):
         db = self.SessionLocal()
@@ -45,23 +48,23 @@ class TestSightingEndpoint(TestCase, BaseDBTest):
     def test_alerts_disabled_no_envia_mensaje(self):
         self._insert_alert(False)
 
-        with patch("api.routes.sighting.send_message", new=AsyncMock()) as smock:
-            r = self.client.get("/sighting_message")
+        with patch('api.routes.sighting.send_message', new=AsyncMock()) as smock:
+            r = self.client.get('/sighting_message')
             self.assertEqual(r.status_code, 200)
-            self.assertEqual(r.json(), ["Alerts are not enabled"])
+            self.assertEqual(r.json(), ['Alerts are not enabled'])
             smock.assert_not_awaited()
 
     def test_sin_ultimo_sighting_envia_mensaje_y_crea_registro(self):
         self._insert_alert(True)
 
-        with patch("api.routes.sighting.send_message", new=AsyncMock()) as smock:
-            r = self.client.get("/sighting_message")
+        with patch('api.routes.sighting.send_message', new=AsyncMock()) as smock:
+            r = self.client.get('/sighting_message')
             self.assertEqual(r.status_code, 200)
             data = r.json()
 
-            self.assertEqual(data, {"received": True, "message_send": True})
+            self.assertEqual(data, {'received': True, 'message_send': True})
 
-            expected = "Sighting detected - URL: http://camera.local/stream"
+            expected = 'Sighting detected - URL: http://camera.local/stream'
             smock.assert_awaited_once_with(expected)
 
         db = self._db()
@@ -75,19 +78,17 @@ class TestSightingEndpoint(TestCase, BaseDBTest):
     def test_ultimo_sighting_reciente_no_envia_mensaje_y_crea_registro_false(self):
         self._insert_alert(True)
 
-        os.environ["RECENTLY_SIGHTING"] = "300"
+        os.environ['RECENTLY_SIGHTING'] = '300'
 
-        from datetime import datetime, timezone, timedelta
         now = datetime.now(timezone.utc)
         self._insert_sighting(message_send=True, dt=now - timedelta(seconds=10))
 
-        with patch("api.routes.sighting.send_message", new=AsyncMock()) as smock:
-            r = self.client.get("/sighting_message")
+        with patch('api.routes.sighting.send_message', new=AsyncMock()) as smock:
+            r = self.client.get('/sighting_message')
             self.assertEqual(r.status_code, 200)
-            self.assertEqual(r.json(), {"received": True, "message_send": False})
+            self.assertEqual(r.json(), {'received': True, 'message_send': False})
             smock.assert_not_awaited()
 
-        # último registro creado con message_send=False
         db = self._db()
         try:
             last = db.query(Sighting).order_by(Sighting.id.desc()).first()
@@ -97,44 +98,41 @@ class TestSightingEndpoint(TestCase, BaseDBTest):
 
     def test_ultimo_sighting_antiguo_envia_mensaje(self):
         self._insert_alert(True)
-        os.environ["RECENTLY_SIGHTING"] = "300"
+        os.environ['RECENTLY_SIGHTING'] = '300'
 
-        from datetime import datetime, timezone, timedelta
         now = datetime.now(timezone.utc)
         self._insert_sighting(message_send=True, dt=now - timedelta(seconds=301))
 
-        with patch("api.routes.sighting.send_message", new=AsyncMock()) as smock:
-            r = self.client.get("/sighting_message")
+        with patch('api.routes.sighting.send_message', new=AsyncMock()) as smock:
+            r = self.client.get('/sighting_message')
             self.assertEqual(r.status_code, 200)
-            self.assertEqual(r.json(), {"received": True, "message_send": True})
+            self.assertEqual(r.json(), {'received': True, 'message_send': True})
 
-            expected = "Sighting detected - URL: http://camera.local/stream"
+            expected = 'Sighting detected - URL: http://camera.local/stream'
             smock.assert_awaited_once_with(expected)
 
     def test_fecha_naive_en_ultimo_sighting_se_trata_como_utc(self):
         self._insert_alert(True)
-        os.environ["RECENTLY_SIGHTING"] = "300"
+        os.environ['RECENTLY_SIGHTING'] = '300'
 
-        from datetime import datetime, timezone, timedelta
-        # naive datetime (sin tzinfo)
         naive_old = (datetime.now(timezone.utc) - timedelta(seconds=301)).replace(tzinfo=None)
         self._insert_sighting(message_send=True, dt=naive_old)
 
-        with patch("api.routes.sighting.send_message", new=AsyncMock()) as smock:
-            r = self.client.get("/sighting_message")
+        with patch('api.routes.sighting.send_message', new=AsyncMock()) as smock:
+            r = self.client.get('/sighting_message')
             self.assertEqual(r.status_code, 200)
-            self.assertEqual(r.json(), {"received": True, "message_send": True})
+            self.assertEqual(r.json(), {'received': True, 'message_send': True})
             smock.assert_awaited_once()
 
     def test_mensaje_compone_con_env_vars(self):
         self._insert_alert(True)
 
-        os.environ["TELEGRAM_SIGHTING_MESSAGE"] = "ALERTA"
-        os.environ["CAMERA_URL"] = "https://example.com/cam"
+        os.environ['TELEGRAM_SIGHTING_MESSAGE'] = 'ALERTA'
+        os.environ['CAMERA_URL'] = 'https://example.com/cam'
 
-        with patch("api.routes.sighting.send_message", new=AsyncMock()) as smock:
-            r = self.client.get("/sighting_message")
+        with patch('api.routes.sighting.send_message', new=AsyncMock()) as smock:
+            r = self.client.get('/sighting_message')
             self.assertEqual(r.status_code, 200)
-            self.assertTrue(r.json()["message_send"])
+            self.assertTrue(r.json()['message_send'])
 
-            smock.assert_awaited_once_with("ALERTA - URL: https://example.com/cam")
+            smock.assert_awaited_once_with('ALERTA - URL: https://example.com/cam')

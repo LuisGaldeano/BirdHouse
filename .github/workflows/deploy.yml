@@ -53,10 +53,10 @@ jobs:
           port: ${{ secrets.PORT }}
           script: |
             cd BirdHouse
-            
+
             echo "Pulling changes"
-            git pull --ff-only 
-            
+            git pull --ff-only
+
             echo "Updating production settings"
             rm settings/production.py
             echo TELEGRAM_TOKEN="${{ secrets.TELEGRAM_TOKEN }}" >> settings/production.py
@@ -65,7 +65,7 @@ jobs:
             echo API_KEY="${{ secrets.API_KEY }}" >> settings/production.py
             echo LOG_LEVEL="${{ secrets.LOG_LEVEL }}" >> settings/production.py
             touch settings/testing.py
-                        
+
             echo "Killing previous"
             ps axf | grep "python main.py" | grep -v grep | awk '{print "kill -9 " $1}'
             echo "Starting new"

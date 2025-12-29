@@ -20,8 +20,16 @@ httpx = "^0.28.1"
 python-dotenv = "^1.2.1"
 anyio = '3.7.1'
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
+pylint = "3.2.2"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.pylint.main]
+source-roots = ["src"]
+
+[tool.pylint]
+max-line-length = 120
+disable = ["C0114", "W0718", "R0801", "R0902", "R0903", "C0115", "E1101", "C0116", "C0103", "W0612"]
