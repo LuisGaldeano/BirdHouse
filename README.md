@@ -28,7 +28,7 @@ Installing the project is straightforward if you have **Make** installed.
 First, clone the repository and move into the project directory:
 
 ```bash
-git clone https://github.com/<OWNER>/<REPO>.git
+git clone https://github.com/martingaldeca/BirdHouse.git
 ```
 and once the repository has been cloned
 

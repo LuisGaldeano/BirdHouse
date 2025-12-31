@@ -45,7 +45,7 @@ class TestSightingEndpoint(TestCase, BaseDBTest):
         finally:
             db.close()
 
-    def test_alerts_disabled_no_envia_mensaje(self):
+    def test_disabled_alerts_no_message(self):
         self._insert_alert(False)
 
         with patch('api.routes.sighting.send_message', new=AsyncMock()) as smock:
@@ -54,7 +54,7 @@ class TestSightingEndpoint(TestCase, BaseDBTest):
             self.assertEqual(r.json(), ['Alerts are not enabled'])
             smock.assert_not_awaited()
 
-    def test_sin_ultimo_sighting_envia_mensaje_y_crea_registro(self):
+    def test_no_last_sighting_send_message(self):
         self._insert_alert(True)
 
         with patch('api.routes.sighting.send_message', new=AsyncMock()) as smock:
@@ -75,7 +75,7 @@ class TestSightingEndpoint(TestCase, BaseDBTest):
         finally:
             db.close()
 
-    def test_ultimo_sighting_reciente_no_envia_mensaje_y_crea_registro_false(self):
+    def test_recent_sighting_no_message_false_record(self):
         self._insert_alert(True)
 
         os.environ['RECENTLY_SIGHTING'] = '300'
@@ -96,7 +96,7 @@ class TestSightingEndpoint(TestCase, BaseDBTest):
         finally:
             db.close()
 
-    def test_ultimo_sighting_antiguo_envia_mensaje(self):
+    def test_old_sighting_send_message(self):
         self._insert_alert(True)
         os.environ['RECENTLY_SIGHTING'] = '300'
 
@@ -111,7 +111,7 @@ class TestSightingEndpoint(TestCase, BaseDBTest):
             expected = 'Sighting detected - URL: http://camera.local/stream'
             smock.assert_awaited_once_with(expected)
 
-    def test_fecha_naive_en_ultimo_sighting_se_trata_como_utc(self):
+    def test_naive_sighting_utc(self):
         self._insert_alert(True)
         os.environ['RECENTLY_SIGHTING'] = '300'
 
@@ -124,7 +124,7 @@ class TestSightingEndpoint(TestCase, BaseDBTest):
             self.assertEqual(r.json(), {'received': True, 'message_send': True})
             smock.assert_awaited_once()
 
-    def test_mensaje_compone_con_env_vars(self):
+    def test_message_from_env(self):
         self._insert_alert(True)
 
         os.environ['TELEGRAM_SIGHTING_MESSAGE'] = 'ALERTA'

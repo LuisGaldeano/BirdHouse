@@ -6,7 +6,7 @@ from messages.telegram import send_message
 
 
 class SendMessageTest(unittest.IsolatedAsyncioTestCase):
-    async def test_send_message_envia_texto_con_chat_id(self):
+    async def test_send_message_sends_text(self):
         os.environ['TELEGRAM_TOKEN'] = 'TEST_TOKEN'
         os.environ['TELEGRAM_CHAT_ID'] = '123456'
 
@@ -22,7 +22,7 @@ class SendMessageTest(unittest.IsolatedAsyncioTestCase):
             )
             logger_mock.info.assert_called_once_with('Message has been sent')
 
-    async def test_send_message_sin_chat_id_lanza_runtimeerror(self):
+    async def test_send_message_no_chat_id_error(self):
         os.environ['TELEGRAM_TOKEN'] = 'TEST_TOKEN'
         os.environ.pop('TELEGRAM_CHAT_ID', None)
 
@@ -35,7 +35,7 @@ class SendMessageTest(unittest.IsolatedAsyncioTestCase):
         self.assertIn('TELEGRAM_CHAT_ID is not set', str(ctx.exception))
         fake_bot.send_message.assert_not_called()
 
-    async def test_send_message_sin_token_lanza_runtimeerror(self):
+    async def test_send_message_no_token_error(self):
         os.environ.pop('TELEGRAM_TOKEN', None)
         os.environ['TELEGRAM_CHAT_ID'] = '123456'
 
@@ -48,7 +48,7 @@ class SendMessageTest(unittest.IsolatedAsyncioTestCase):
         self.assertIn('TELEGRAM_TOKEN is not set', str(ctx.exception))
         fake_bot.send_message.assert_not_called()
 
-    async def test_send_message_si_no_se_inyecta_bot_crea_bot_con_token(self):
+    async def test_send_message_creates_bot_if_missing(self):
         os.environ['TELEGRAM_TOKEN'] = 'TEST_TOKEN'
         os.environ['TELEGRAM_CHAT_ID'] = '123456'
 
