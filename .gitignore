@@ -215,6 +215,6 @@ cython_debug/
 src/logs/birdHouse.log
 src/database/birdHouse.db
 src/settings/testing.py
-last_sighting.jpg
+
 
 .idea
