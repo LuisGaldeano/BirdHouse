@@ -1,94 +1,54 @@
 # -*- coding: utf-8 -*-
-import os
-from datetime import datetime, timezone, timedelta
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Response, status
 from sqlalchemy.orm import Session
-from database.database import get_db
-from models.alert import AlertSwitch
-from models.sighting import Sighting
-from settings.logging import get_logger
-from messages.telegram import send_message, send_image
 
-logger = get_logger(__name__)
+from database.database import get_db
+from repositories.alert_switch_repository import AlertSwitchRepository
+from repositories.sighting_repository import SightingRepository
+from services.sighting_service import SightingService
 
 router = APIRouter()
 
-@router.get('/sighting_message')
-async def sighting_message(db: Session = Depends(get_db)):
-    waiting_time = float(os.getenv('RECENTLY_SIGHTING', '300'))
-    now = datetime.now(timezone.utc)
 
-    alert = db.query(AlertSwitch).order_by(AlertSwitch.id.desc()).first()
+def get_sighting_service(db: Session = Depends(get_db)) -> SightingService:
+    alert_repo = AlertSwitchRepository(db)
+    sighting_repo = SightingRepository(db)
+    return SightingService(alert_repo=alert_repo, sighting_repo=sighting_repo)
 
-    if alert is None or not alert.enabled:
-        return {'Alerts are not enabled'}
 
-    last_sighting = db.query(Sighting).filter_by(message_send=True).order_by(Sighting.id.desc()).first()
+@router.post("/send_message")
+async def send_message(
+    response: Response,
+    service: SightingService = Depends(get_sighting_service),
+):
+    try:
+        result = await service.trigger_sighting_message()
+    except PermissionError:
+        response.status_code = status.HTTP_409_CONFLICT
+        return {"error": "Alerts are not enabled"}
 
-    message_send = False
+    if result["sent"]:
+        response.status_code = status.HTTP_202_ACCEPTED
+        return {"received": True, "sent": True, "event_id": result["event_id"]}
 
-    if last_sighting is None:
-        message_send = True
-    else:
-        dt = last_sighting.date
+    response.status_code = status.HTTP_204_NO_CONTENT
+    return None
 
-        if dt.tzinfo is None:
-            dt = dt.replace(tzinfo=timezone.utc)
 
-        if dt <= now - timedelta(seconds=waiting_time):
-            message_send = True
+@router.post("/send_photo")
+async def send_photo(
+    response: Response,
+    service: SightingService = Depends(get_sighting_service),
+):
+    try:
+        result = await service.trigger_sighting_photo()
+    except PermissionError:
+        response.status_code = status.HTTP_409_CONFLICT
+        return {"error": "Alerts are not enabled"}
 
-    if message_send:
-        logger.info('Sending message with sighting')
-        message = f"{os.getenv('TELEGRAM_SIGHTING_MESSAGE')} - URL: {os.getenv('CAMERA_URL')}"
-        await send_message(message)
+    if result["sent"]:
+        response.status_code = status.HTTP_202_ACCEPTED
+        return {"received": True, "sent": True, "event_id": result["event_id"]}
 
-    message = Sighting(message_send=message_send, date=now, photo=False)
-    db.add(message)
-    db.commit()
-    db.refresh(message)
-
-    return {
-        'received': True,
-        'message_send': message_send,
-    }
-
-@router.get('/sighting_photo')
-async def sighting_photo(db: Session = Depends(get_db)):
-    waiting_time = float(os.getenv('RECENTLY_SIGHTING', '300'))
-    now = datetime.now(timezone.utc)
-    file = 'last_sighting.jpg'
-
-    alert = db.query(AlertSwitch).order_by(AlertSwitch.id.desc()).first()
-
-    if alert is None or not alert.enabled:
-        return {'error': 'Alerts are not enabled'}
-
-    last_sighting = db.query(Sighting).filter_by(message_send=True).order_by(Sighting.id.desc()).first()
-
-    message_send = False
-
-    if last_sighting is None:
-        message_send = True
-    else:
-        dt = last_sighting.date
-        if dt.tzinfo is None:
-            dt = dt.replace(tzinfo=timezone.utc)
-
-        if dt <= now - timedelta(seconds=waiting_time):
-            message_send = True
-
-    if message_send:
-        logger.info('Sending photo with sighting')
-
-        image_path = f"{os.getenv('SIGHTING_PATH', '/src/media')}/{file}"
-        caption = f"{os.getenv('TELEGRAM_SIGHTING_MESSAGE')} - URL: {os.getenv('CAMERA_URL')}"
-
-        await send_image(image_path=image_path, caption=caption)
-
-    db_event = Sighting(message_send=message_send, date=now, photo=True)
-    db.add(db_event)
-    db.commit()
-    db.refresh(db_event)
-
-    return {'received': True, 'message_send': message_send}
+    response.status_code = status.HTTP_204_NO_CONTENT
+    return None

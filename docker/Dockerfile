@@ -1,4 +1,4 @@
-FROM python:3.10.12-slim
+FROM python:3.14
 
 # Install tools needed for translations
 RUN apt-get update && apt-get install -y wget make gettext && apt-get clean
@@ -8,13 +8,14 @@ RUN apt-get autoclean
 RUN mkdir -p /src
 WORKDIR /src
 
-ENV DOCKERIZE_VERSION v0.6.1
+ENV DOCKERIZE_VERSION v0.9.9
 RUN wget https://github.com/jwilder/dockerize/releases/download/${DOCKERIZE_VERSION}/dockerize-linux-amd64-${DOCKERIZE_VERSION}.tar.gz -O - | tar -C /usr/local/bin -xzv
 
 COPY src/ /src/
 
-RUN pip install poetry==1.6.1
-RUN poetry config virtualenvs.create false && poetry install
+RUN pip install poetry==2.3.0
+RUN poetry config virtualenvs.create false
+RUN poetry install --no-interaction --no-ansi --no-root
 
 RUN mkdir -p /src/database /src/logs
 

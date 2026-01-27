@@ -17,7 +17,6 @@ def get_application(db_initialization: bool = True) -> FastAPI:
     application = FastAPI(**settings.fastapi_kwargs)
 
     if db_initialization:
-        # Init the database
         init_db()
 
     application.include_router(api_router, prefix=settings.api_prefix)
