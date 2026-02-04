@@ -11,7 +11,7 @@ logger = get_logger(__name__)
 
 def get_application(db_initialization: bool = True) -> FastAPI:
     settings = get_app_settings()
-    logger.info("Legaly is in '%s' environment", settings.app_env)
+    logger.info("Birdhouse is in '%s' environment", settings.app_env)
 
     application = FastAPI(**settings.fastapi_kwargs)
 

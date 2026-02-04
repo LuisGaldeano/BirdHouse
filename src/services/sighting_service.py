@@ -5,6 +5,7 @@ from datetime import datetime, timezone, timedelta
 from repositories.alert_switch_repository import AlertSwitchRepository
 from repositories.sighting_repository import SightingRepository
 from settings.logging import get_logger
+from settings.settings import env_vars
 from messages.telegram import send_message, send_image
 
 logger = get_logger(__name__)
@@ -16,7 +17,7 @@ class SightingService:
         self.sighting_repo = sighting_repo
 
     def _waiting_time_seconds(self) -> float:
-        return float(os.getenv("RECENTLY_SIGHTING", "300"))
+        return float(env_vars.RECENTLY_SIGHTING)
 
     def _assert_alerts_enabled(self) -> None:
         alert = self.alert_repo.get_last()
@@ -44,7 +45,7 @@ class SightingService:
 
         if should_send:
             logger.info("Sending message with sighting")
-            message = f"{os.getenv('TELEGRAM_SIGHTING_MESSAGE')} - URL: {os.getenv('CAMERA_URL')}"
+            message = f"{env_vars.TELEGRAM_SIGHTING_MESSAGE} - URL: {env_vars.CAMERA_URL}"
             await send_message(message)
 
         ev = self.sighting_repo.add(message_send=should_send, date=now, photo=False)
@@ -62,8 +63,8 @@ class SightingService:
         if should_send:
             logger.info("Sending photo with sighting")
             file = "last_sighting.jpg"
-            image_path = os.path.join(os.getenv("SIGHTING_PATH", "/src/media"), file,)
-            caption = f"{os.getenv('TELEGRAM_SIGHTING_MESSAGE')} - URL: {os.getenv('CAMERA_URL')}"
+            image_path = os.path.join(env_vars.SIGHTING_PATH, file,)
+            caption = f"{env_vars.TELEGRAM_SIGHTING_MESSAGE} - URL: {env_vars.CAMERA_URL}"
             await send_image(image_path=image_path, caption=caption)
 
         ev = self.sighting_repo.add(message_send=should_send, date=now, photo=True)

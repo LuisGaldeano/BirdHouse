@@ -4,12 +4,13 @@ from typing import Optional
 
 from telegram import Bot
 from settings.logging import get_logger
+from settings.settings import env_vars
 
 logger = get_logger(__name__)
 
 def get_telegram_config() -> tuple[str, str]:
-    token = os.getenv('TELEGRAM_TOKEN')
-    chat_id = os.getenv('TELEGRAM_CHAT_ID')
+    token = env_vars.TELEGRAM_TOKEN
+    chat_id = env_vars.TELEGRAM_CHAT_ID
 
     if not token:
         raise RuntimeError('TELEGRAM_TOKEN is not set')
