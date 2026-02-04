@@ -13,7 +13,6 @@ def get_application(db_initialization: bool = True) -> FastAPI:
     settings = get_app_settings()
     logger.info("Legaly is in '%s' environment", settings.app_env)
 
-    # Load app
     application = FastAPI(**settings.fastapi_kwargs)
 
     if db_initialization:
